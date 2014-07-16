@@ -1,0 +1,4 @@
+[submodule "yarvis-server/beatdetektor"]
+	path = yarvis-server/beatdetektor
+	url = git@github.com:zhennTil/beatdetektor.git
+	branch = master
