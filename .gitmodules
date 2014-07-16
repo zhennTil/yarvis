@@ -1,4 +1,0 @@
-[submodule "beatdetektor"]
-	path = beatdetektor
-	url = git@github.com:zhennTil/beatdetektor.git
-	branch = master
