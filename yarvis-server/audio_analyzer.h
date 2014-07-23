@@ -22,16 +22,20 @@ private:
 	bool running, error, kill;
 
 	// Analysis data
-	kiss_fftr_cfg fft_cfg;
+	kiss_fftr_cfg fftCfg;
 	size_t analysisHead;
-	kiss_fft_cpx fft_out[FFT_CHUNK_SIZE / 2 + 1];
-	float fft_sym[FFT_CHUNK_SIZE];
+	kiss_fft_cpx fftOut[FFT_CHUNK_SIZE / 2 + 1];
+	float fftSym[FFT_CHUNK_SIZE / 2];
+	float *fftHalfOut;
 
 	// References to user data struct
 	const float *buffer;
 	const size_t &bufferHead;
+
+	float hann(size_t n);
 public:
 	AudioAnalyzer(const float *buffer, const size_t& bufferHead);
+	AudioAnalyzer(const float *buffer, const size_t& bufferHead, float *fftHalfOut);
 	~AudioAnalyzer();
 
 	void loop();

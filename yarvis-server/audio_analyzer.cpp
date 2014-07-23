@@ -1,6 +1,5 @@
 
 #include "audio_analyzer.h"
-#include <iostream>
 
 AudioAnalyzer::AudioAnalyzer(const float *buffer, const size_t& bufferHead)
 	: running(false),
@@ -8,13 +7,30 @@ AudioAnalyzer::AudioAnalyzer(const float *buffer, const size_t& bufferHead)
 	kill(false),
 	buffer(buffer),
 	bufferHead(bufferHead),
-	analysisHead(0)
+	analysisHead(0),
+	fftHalfOut(NULL)
 {
 	// Instantiate beat detektor
 	this->beat = std::unique_ptr<BeatDetektor>(new BeatDetektor(100.f, 199.f));
 
 	// Allocate FFT memory
-	this->fft_cfg = kiss_fftr_alloc(FFT_CHUNK_SIZE, 0, NULL, NULL);
+	this->fftCfg = kiss_fftr_alloc(FFT_CHUNK_SIZE, 0, NULL, NULL);
+}
+
+AudioAnalyzer::AudioAnalyzer(const float *buffer, const size_t& bufferHead, float *fftHalfOut)
+	: running(false),
+	error(false),
+	kill(false),
+	buffer(buffer),
+	bufferHead(bufferHead),
+	analysisHead(0),
+	fftHalfOut(fftHalfOut)
+{
+	// Instantiate beat detektor
+	this->beat = std::unique_ptr<BeatDetektor>(new BeatDetektor(100.f, 199.f));
+
+	// Allocate FFT memory
+	this->fftCfg = kiss_fftr_alloc(FFT_CHUNK_SIZE, 0, NULL, NULL);
 }
 
 void AudioAnalyzer::loop()
@@ -33,23 +49,52 @@ void AudioAnalyzer::loop()
 	}
 }
 
+float AudioAnalyzer::hann(size_t n)
+{
+	return .5f *
+	(
+		1 - cosf(
+			(PI_DOUBLE * n) / (FFT_CHUNK_SIZE - 1)
+		)
+	);
+}
+
 void AudioAnalyzer::processBuffer(float time)
 {
-	// TODO: Apply Hann window
+	// Apply Hann window
+	float fftIn[FFT_CHUNK_SIZE];
+	for (size_t i = 0; i < FFT_CHUNK_SIZE; ++i)
+	{
+		fftIn[i] = buffer[analysisHead + i] * hann(i);
+	}
 
 	// Compute FFT
-	kiss_fftr(fft_cfg, buffer + analysisHead, fft_out);
+	kiss_fftr(fftCfg, fftIn, fftOut);
 
 	// Convert to symmetric real format for BeatDetektor
-	for (size_t i = 0; i < FFT_CHUNK_SIZE/2; ++i)
+	kiss_fft_cpx out;
+	for (size_t i = 0; i < FFT_CHUNK_SIZE/4; ++i)
 	{
-		fft_sym[i] = fft_out[i].r;
-		fft_sym[FFT_CHUNK_SIZE - 1 - i] = fft_out[i].r;
+		out = fftOut[i];
+		fftSym[i] = sqrtf(out.r*out.r + out.i*out.i);
+		fftSym[FFT_CHUNK_SIZE/2 - 1 - i] = fftSym[i];
+		
+		//fftSym[i] = sqrtf(out.r*out.r + out.i*out.i);
 	}
-	fft_sym[FFT_CHUNK_SIZE / 2] = fft_out[FFT_CHUNK_SIZE / 2].r;
+	out = fftOut[FFT_CHUNK_SIZE / 4];
+	fftSym[FFT_CHUNK_SIZE / 4] = sqrtf(out.r*out.r + out.i*out.i);
+
+	// Write to auxiliary output if specified
+	if (fftHalfOut != NULL)
+	{
+		for (size_t i = 0; i < FFT_CHUNK_SIZE / 4; ++i)
+		{
+			fftHalfOut[i] = fftSym[i];
+		}
+	}
 
 	// Process with BeatDetektor
-	beat->process(time, std::vector<float>(fft_sym, fft_sym + FFT_CHUNK_SIZE));
+	beat->process(time, std::vector<float>(fftSym, fftSym + FFT_CHUNK_SIZE));
 	
 	if (analysisHead == AUDIO_BUFFER_SIZE - FFT_CHUNK_SIZE)
 		analysisHead = 0;
@@ -66,5 +111,5 @@ AudioAnalyzer::~AudioAnalyzer()
 {
 
 	// Free the FFT memory
-	kiss_fftr_free(fft_cfg);
+	kiss_fftr_free(fftCfg);
 }

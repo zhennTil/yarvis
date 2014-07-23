@@ -122,23 +122,28 @@ int main(int argc, char* argv[])
 	err = Pa_StartStream(stream);
 	HANDLE_PA_ERROR(err, "stream start");
 
-	// Set up audio processing thread
-	AudioAnalyzer analyzer(data.buffer, data.bufferHead);
-	thread analyzeThread([&]() {analyzer.loop(); });
-	
 	// Set up debug window
 	// TODO: Commandline and/or cmake toggle
 	DebugWindow window;
 	thread drawThread([&]() {window(); });
 	
+	// Set up audio processing thread
+	AudioAnalyzer analyzer(data.buffer, data.bufferHead, window.fft);
+	thread analyzeThread([&]() {analyzer.loop(); });
+
+	cout << "Type 'q' and enter to quit." << endl;
 	// Check command input
 	char cmd = ' ';
-	cout << "Entering loop" << endl;
 	do
 	{
 		cin >> cmd;
 	} while (cmd != 'q');
-	cout << "Exiting loop" << endl;
+
+	analyzer.stop();
+	analyzeThread.join();
+
+	window.stop();
+	drawThread.join();
 
 	// Terminate audio input
 	err = Pa_StopStream(stream);
