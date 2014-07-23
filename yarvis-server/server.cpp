@@ -33,15 +33,20 @@ static int processAudioInput(
 
 	// Replace buffer data
 	ud->lock = true;
-	ud->buffer.resize(framesPerBuffer);
-	ud->buffer_size = framesPerBuffer;
-	unsigned long i;
-	for ( i = 0; i<framesPerBuffer; i++ )
+	if (!ud->updated)
 	{
-		ud->buffer[i] = in[i];
+		ud->buffer_size = 0;
 	}
-	ud->lock = false;
+
+	ud->buffer.resize(ud->buffer_size + framesPerBuffer);
+	for (unsigned long i = 0; i < framesPerBuffer; i++)
+	{
+		ud->buffer[ud->buffer_size + i] = in[i];
+	}
+	ud->buffer_size += framesPerBuffer;
+
 	ud->updated = true;
+	ud->lock = false;
 
 	return 0;
 }
@@ -50,7 +55,7 @@ PaDeviceIndex selectInputDevice()
 {
 	// TODO: Provide fallback device selector if Pa_GetDefaultInputDevice() fails. Even better, with a cmake option.
 
-	/*PaDeviceIndex numDevices = Pa_GetDeviceCount();
+	PaDeviceIndex numDevices = Pa_GetDeviceCount();
 	if (numDevices < 0) HANDLE_PA_ERROR(numDevices, "device counting");
 
 	vector<PaDeviceIndex> inputDeviceIndices;
@@ -74,11 +79,13 @@ PaDeviceIndex selectInputDevice()
 
 	cout << "Select a device: ";
 	size_t selectedI;
-	cin >> selectedI;*/
+	cin >> selectedI;
 	
 	//cout << Pa_GetHostApiInfo(deviceInfo->hostApi)->name << endl;
 	
-	return Pa_GetDefaultInputDevice();
+	return inputDeviceIndices[selectedI];
+
+	//return Pa_GetDefaultInputDevice();
 }
 
 PaError openInputStream(PaStream** stream, const PaDeviceIndex& device, PaUserData* data)
@@ -105,49 +112,38 @@ PaError openInputStream(PaStream** stream, const PaDeviceIndex& device, PaUserDa
 		data);
 }
 
-void processBuffer(const vector<float>& buffer, size_t buffer_size, kiss_fftr_cfg& fft_cfg, BeatDetektor& beat, float time)
+void processBuffer(const vector<float>& buffer, size_t buffer_size, kiss_fftr_cfg& fft_cfg, BeatDetektor*& beat, float time)
 {
-	static size_t fft_size = 0;
-	static vector<kiss_fft_cpx> fft_out;
-	static vector<float> fft_sym;
+	kiss_fft_cpx fft_out[65];
+	float fft_sym[128];
 
-	// Ensure buffer is of even size
-	if (buffer_size % 2 > 0)
-	{
-		--buffer_size;
-	}
+	// Ensure buffer is multiple of 128
+	buffer_size -= buffer_size % 128;
 
 	// TODO: Apply Hann window
 
-
-	// Allocate FFT memory if needed
-	if (fft_size != buffer_size)
-	{
-		if (fft_cfg != NULL) kiss_fftr_free(fft_cfg);
-		fft_cfg = kiss_fftr_alloc((int)buffer_size, 0, NULL, NULL);
-		fft_size = buffer_size;
-		fft_out.resize(fft_size / 2);
-		fft_sym.resize(fft_size);
-	}
-	
 	// Compute FFT
-	kiss_fftr(fft_cfg, buffer.data(), fft_out.data());
-
-	// Convert to symmetric real format for BeatDetektor
-	for (size_t i = 0; i < fft_size / 2; ++i)
+	for (size_t bufferI = 0; bufferI < buffer_size; bufferI += 128)
 	{
-		fft_sym[i] = fft_out[i].r;
-		fft_sym[fft_size - 1 - i] = fft_out[i].r;
-	}
+		kiss_fftr(fft_cfg, buffer.data() + bufferI, fft_out);
 
-	// Process with BeatDetektor
-	beat.process(time, fft_sym);
+		// Convert to symmetric real format for BeatDetektor
+		for (size_t i = 0; i < 64; ++i)
+		{
+			fft_sym[i] = fft_out[i].r;
+			fft_sym[127 - i] = fft_out[i].r;
+		}
+		fft_sym[64] = fft_out[64].r;
+
+		// Process with BeatDetektor
+		beat->process(time, vector<float>(fft_sym, fft_sym+128));
+	}
 }
 
 int main(int argc, char* argv[])
 {
 	// Initialize shared resources
-	kiss_fftr_cfg fft_cfg = NULL;
+	kiss_fftr_cfg fft_cfg = kiss_fftr_alloc(128, 0, NULL, NULL);
 	PaUserData data;
 	data.updated = false;
 	data.lock = false;
@@ -167,7 +163,7 @@ int main(int argc, char* argv[])
 	HANDLE_PA_ERROR(err, "stream start");
 
 	// Instantiate beat detektor
-	BeatDetektor bd(100.f, 199.f);
+	BeatDetektor *bd = new BeatDetektor(100.f, 199.f);
 	double startTime = Pa_GetStreamTime(stream);
 
 	// Check command input
@@ -180,11 +176,12 @@ int main(int argc, char* argv[])
 		// TODO: Place the buffer processing code in a separate thread, so we can allow the command input to block.
 		this_thread::yield();
 
+		// In case an interrupt is running, wait for it to finish.
+		while (data.lock) this_thread::yield();
+
 		// Has the interrupt updated its buffer?
-		if (data.updated)
+		if (data.updated && data.buffer_size >= 128)
 		{
-			// In case another interrupt has already started, wait for it to finish.
-			while (data.lock) this_thread::yield();
 			// Swap the buffers and clear the updated-flag.
 			data.buffer.swap(backBuffer);
 			data.updated = false;
@@ -195,6 +192,9 @@ int main(int argc, char* argv[])
 	} while (cmd != 'q');
 	cout << "Exiting loop" << endl;
 
+	// Free BeatDetektor
+	delete bd;
+
 	// Terminate audio input
 	err = Pa_StopStream(stream);
 	HANDLE_PA_ERROR(err, "stream stop");
@@ -202,9 +202,8 @@ int main(int argc, char* argv[])
 	err = Pa_Terminate();
 	HANDLE_PA_ERROR(err, "termination");
 
-	// Free the FFT memory, if allocated
-	if (fft_cfg != NULL)
-		kiss_fftr_free(fft_cfg);
+	// Free the FFT memory
+	kiss_fftr_free(fft_cfg);
 
 	return 0;
 }
