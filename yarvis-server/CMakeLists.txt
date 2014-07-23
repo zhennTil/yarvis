@@ -1,7 +1,9 @@
 
 find_package (Portaudio REQUIRED)
+find_package (OpenGL REQUIRED)
+find_package (GLFW REQUIRED)
 
-include_directories (beatdetektor/cpp kiss_fft130 kiss_fft130/tools ${PORTAUDIO_INCLUDE_DIRS})
+include_directories (beatdetektor/cpp kiss_fft130 kiss_fft130/tools ${PORTAUDIO_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS})
 
 add_definitions (${PORTAUDIO_DEFINITIONS})
 
@@ -12,7 +14,7 @@ list (APPEND YARVIS_SERVER_SOURCES "beatdetektor/cpp/BeatDetektor.cpp")
 list (APPEND YARVIS_SERVER_SOURCES "kiss_fft130/kiss_fft.c" "kiss_fft130/tools/kiss_fftr.c")
 
 # Server sources
-list (APPEND YARVIS_SERVER_SOURCES "server.cpp")
+list (APPEND YARVIS_SERVER_SOURCES "server.cpp" "debug_window.cpp" "audio_analyzer.cpp")
 
 add_executable (yarvis-server ${YARVIS_SERVER_SOURCES})
-target_link_libraries (yarvis-server ${PORTAUDIO_LIBRARIES})
+target_link_libraries (yarvis-server ${PORTAUDIO_LIBRARIES} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
