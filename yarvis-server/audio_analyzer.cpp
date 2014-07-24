@@ -73,28 +73,25 @@ void AudioAnalyzer::processBuffer(float time)
 
 	// Convert to symmetric real format for BeatDetektor
 	kiss_fft_cpx out;
-	for (size_t i = 0; i < FFT_CHUNK_SIZE/4; ++i)
+	for (size_t i = 0; i < FFT_CHUNK_SIZE/2; ++i)
 	{
 		out = fftOut[i];
-		fftSym[i] = sqrtf(out.r*out.r + out.i*out.i);
-		fftSym[FFT_CHUNK_SIZE/2 - 1 - i] = fftSym[i];
-		
-		//fftSym[i] = sqrtf(out.r*out.r + out.i*out.i);
+		fftAmp[i] = sqrtf(out.r*out.r + out.i*out.i);
 	}
 	out = fftOut[FFT_CHUNK_SIZE / 4];
-	fftSym[FFT_CHUNK_SIZE / 4] = sqrtf(out.r*out.r + out.i*out.i);
+	fftAmp[FFT_CHUNK_SIZE / 4] = sqrtf(out.r*out.r + out.i*out.i);
 
 	// Write to auxiliary output if specified
 	if (fftHalfOut != NULL)
 	{
 		for (size_t i = 0; i < FFT_CHUNK_SIZE / 4; ++i)
 		{
-			fftHalfOut[i] = fftSym[i];
+			fftHalfOut[i] = fftAmp[i];
 		}
 	}
 
 	// Process with BeatDetektor
-	beat->process(time, std::vector<float>(fftSym, fftSym + FFT_CHUNK_SIZE));
+	beat->process(time, std::vector<float>(fftAmp, fftAmp + FFT_CHUNK_SIZE));
 	
 	if (analysisHead == AUDIO_BUFFER_SIZE - FFT_CHUNK_SIZE)
 		analysisHead = 0;

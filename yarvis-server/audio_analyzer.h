@@ -18,14 +18,13 @@ private:
 	AudioAnalyzer(AudioAnalyzer const &);
 	AudioAnalyzer &operator=(AudioAnalyzer const &);
 
-	std::unique_ptr<BeatDetektor> beat;
 	bool running, error, kill;
 
 	// Analysis data
 	kiss_fftr_cfg fftCfg;
 	size_t analysisHead;
 	kiss_fft_cpx fftOut[FFT_CHUNK_SIZE / 2 + 1];
-	float fftSym[FFT_CHUNK_SIZE / 2];
+	float fftAmp[FFT_CHUNK_SIZE / 2];
 	float *fftHalfOut;
 
 	// References to user data struct
@@ -37,6 +36,8 @@ public:
 	AudioAnalyzer(const float *buffer, const size_t& bufferHead);
 	AudioAnalyzer(const float *buffer, const size_t& bufferHead, float *fftHalfOut);
 	~AudioAnalyzer();
+
+	std::unique_ptr<BeatDetektor> beat;
 
 	void loop();
 	void stop();

@@ -131,6 +131,11 @@ int main(int argc, char* argv[])
 	AudioAnalyzer analyzer(data.buffer, data.bufferHead, window.fft);
 	thread analyzeThread([&]() {analyzer.loop(); });
 
+	window.bpmPtr = &(analyzer.beat->win_bpm_int);
+	window.beatTimerPtr = &(analyzer.beat->bpm_offset);
+	window.beatPtr = &(analyzer.beat->beat_counter);
+	window.qualityPtr = &(analyzer.beat->quality_avg);
+
 	cout << "Type 'q' and enter to quit." << endl;
 	// Check command input
 	char cmd = ' ';
