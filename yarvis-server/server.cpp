@@ -56,6 +56,16 @@ void senderLoop()
 
 void parsePacket(UDPpacket *packet)
 {
-	// TODO: Parse packet
+	switch (packet->data[0])
+	{
+	case YARP_TYPE_CLIENT_HEARTBEAT:
+		clientHeartbeat(packet->address);
+		break;
+	case YARP_TYPE_CLIENT_SUBSCRIBE:
+		clientSubscribe(packet->address, packet->data[1]);
+		break;
+	default:
+		cerr << "WARNING: Server received unknown packet type '" << packet->data[0] << "'." << endl;
+	}
 }
 

@@ -9,14 +9,16 @@ include_directories (beatdetektor/cpp kiss_fft130 kiss_fft130/tools ${PORTAUDIO_
 
 add_definitions (${PORTAUDIO_DEFINITIONS})
 
+
 # BeatDetektor sources
-list (APPEND YARVIS_SERVER_SOURCES "beatdetektor/cpp/BeatDetektor.cpp")
+list (APPEND YARVIS_SERVER_SOURCES "${YARVIS_LIB_DIR}/beatdetektor/cpp/BeatDetektor.cpp")
 
 # KISS FFT sources
-list (APPEND YARVIS_SERVER_SOURCES "kiss_fft130/kiss_fft.c" "kiss_fft130/tools/kiss_fftr.c")
+list (APPEND YARVIS_SERVER_SOURCES "${YARVIS_LIB_DIR}/kiss_fft130/kiss_fft.c" "${YARVIS_LIB_DIR}/kiss_fft130/tools/kiss_fftr.c")
 
 # Server sources
-list (APPEND YARVIS_SERVER_SOURCES "main.cpp" "server.cpp" "debug_window.cpp" "audio_analyzer.cpp")
+file (GLOB_RECURSE YARVIS_SERVER_SOURCES_GLOB "*.cpp")
+list (APPEND YARVIS_SERVER_SOURCES "${YARVIS_SERVER_SOURCES_GLOB}")
 
 add_executable (yarvis-server ${YARVIS_SERVER_SOURCES})
 target_link_libraries (yarvis-server ${PORTAUDIO_LIBRARIES} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${SDL_LIBRARY} ${SDL_NET_LIBRARIES})

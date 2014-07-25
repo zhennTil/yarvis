@@ -2,3 +2,7 @@
 	path = yarvis-server/beatdetektor
 	url = git@github.com:zhennTil/beatdetektor.git
 	branch = master
+[submodule "lib/beatdetektor"]
+	path = lib/beatdetektor
+	url = git@github.com:zhennTil/beatdetektor.git
+	branch = master

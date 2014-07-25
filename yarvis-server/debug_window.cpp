@@ -18,7 +18,7 @@ void DebugWindow::operator() ()
 	}
 
 	// Create a windowed mode window and its OpenGL context
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "YARVIS Server", NULL, NULL);
+	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Yarvis Server", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
