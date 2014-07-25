@@ -30,11 +30,19 @@ void stopServer()
 
 void listenerLoop()
 {
+	UDPsocket socket = SDLNet_UDP_Open(LISTEN_PORT);
+	UDPpacket *packet = SDLNet_AllocPacket(INCOMING_PACKET_SIZE);
+
 	while (runServerLoops)
 	{
 		this_thread::yield();
-		// TODO: Bind a listener port and parse datagrams
+		
+		if (SDLNet_UDP_Recv(socket, packet))
+			parsePacket(packet);
 	}
+
+	SDLNet_FreePacket(packet);
+	SDLNet_UDP_Close(socket);
 }
 
 void senderLoop()
@@ -45,3 +53,9 @@ void senderLoop()
 		// TODO: Send datagrams to subscribers, if appropriate
 	}
 }
+
+void parsePacket(UDPpacket *packet)
+{
+	// TODO: Parse packet
+}
+

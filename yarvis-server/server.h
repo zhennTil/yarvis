@@ -4,6 +4,7 @@
 #include "SDL_net.h"
 #include <iostream>
 #include <thread>
+#include "constants.h"
 
 static bool runServerLoops = false;
 static std::thread listenerThread;
@@ -14,3 +15,5 @@ void stopServer();
 
 void listenerLoop();
 void senderLoop();
+
+void parsePacket(UDPpacket *packet);
