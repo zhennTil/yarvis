@@ -4,6 +4,7 @@
 #include "GLFW\glfw3.h"
 #include "constants.h"
 #include <cmath>
+#include <iostream>
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
@@ -20,7 +21,6 @@ public:
 
 	float fft[FFT_CHUNK_SIZE/2];
 	int *bpmPtr;
-	float *beatTimerPtr;
 	int *beatPtr;
 	float *qualityPtr;
 

@@ -64,7 +64,7 @@ void DebugWindow::operator() ()
 			bpmHeight = .38f,
 			bpmLeft = .9f,
 			bpmWidth = .08f,
-			bpmFrac = (fmaxf(lastGoodBPM, 1000.f) / 10.f - 100.f) / 100.f;
+			bpmFrac = (fmaxf((float)lastGoodBPM, 1000.f) / 10.f - 100.f) / 100.f;
 		glBegin(GL_LINES);
 		glColor3f(.0f, .0f, .6f);
 
@@ -84,26 +84,6 @@ void DebugWindow::operator() ()
 		glVertex2f(bpmLeft, bpmBot + bpmHeight * bpmFrac);
 		glEnd();
 		
-		// Draw beat timer
-		glBegin(GL_LINES);
-		glColor3f(.0f, .6f, .0f);
-
-		glVertex2f(bpmLeft, bpmBot-.01f);
-		glVertex2f(bpmLeft - .02f, bpmBot - .01f);
-		glVertex2f(bpmLeft, bpmBot - bpmHeight);
-		glVertex2f(bpmLeft - .02f, bpmBot - bpmHeight);
-		
-		glEnd();
-
-		float beatPos = (*beatTimerPtr);
-		glBegin(GL_QUADS);
-		glColor3f(.0f, 1.f, .0f);
-		glVertex2f(bpmLeft, bpmBot - .01f);
-		glVertex2f(bpmLeft + bpmWidth, bpmBot - .01f);
-		glVertex2f(bpmLeft + bpmWidth, bpmBot - bpmHeight * beatPos);
-		glVertex2f(bpmLeft, bpmBot - bpmHeight * beatPos);
-		glEnd();
-
 		// Draw beat lamp
 		if ((*beatPtr) % 2 == 0 && (*qualityPtr) >= BEAT_COUNT_QUALITY_THRESHOLD)
 		{
