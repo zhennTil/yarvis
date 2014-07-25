@@ -39,3 +39,24 @@ Tell client(s) about new data on topics they subscribe to
 - topic byte
 - topic payload (length  depends on the topic byte)
 
+
+
+
+Topic Types
+------------------------
+
+### beat `0x01`
+
+
+
+### fft `0x02`
+
+- fft byte[128]
+
+
+
+### intensity `0x03`
+
+- low byte
+- mid byte
+- high byte
