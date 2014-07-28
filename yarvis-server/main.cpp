@@ -136,6 +136,9 @@ int main(int argc, char* argv[])
 	window.beatPtr = &(analyzer.beat->beat_counter);
 	window.qualityPtr = &(analyzer.beat->quality_total);
 
+	// Start network threads
+	initServer(&analyzer);
+
 	cout << "Type 'q' and enter to quit." << endl;
 	// Check command input
 	char cmd = ' ';
@@ -143,6 +146,8 @@ int main(int argc, char* argv[])
 	{
 		cin >> cmd;
 	} while (cmd != 'q');
+
+	stopServer();
 
 	analyzer.stop();
 	analyzeThread.join();

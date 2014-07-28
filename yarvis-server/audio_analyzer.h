@@ -4,10 +4,12 @@
 #include "BeatDetektor.h"
 #include "constants.h"
 #include "kiss_fftr.h"
+#include "yarp_constants.h"
 #include <ctime>
 #include <memory>
 #include <thread>
 #include <vector>
+#include <unordered_map>
 
 class AudioAnalyzer
 {
@@ -38,6 +40,8 @@ public:
 	~AudioAnalyzer();
 
 	std::unique_ptr<BeatDetektor> beat;
+
+	std::unordered_map<Uint32, ClientDescriptor> clientMap;
 
 	void loop();
 	void stop();

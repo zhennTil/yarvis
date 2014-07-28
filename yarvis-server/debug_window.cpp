@@ -59,6 +59,8 @@ void DebugWindow::operator() ()
 		if (*qualityPtr >= BPM_QUALITY_THRESHOLD)
 			lastGoodBPM = (*bpmPtr);
 
+		//std::cout << *qualityPtr << std::endl;
+
 		// Draw BPM gauge
 		float bpmBot = .6f,
 			bpmHeight = .38f,

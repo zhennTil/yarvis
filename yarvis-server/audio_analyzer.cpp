@@ -37,6 +37,7 @@ void AudioAnalyzer::loop()
 {
 	float startTime = (float)clock() / CLOCKS_PER_SEC;
 
+	running = true;
 	while (!kill)
 	{
 		std::this_thread::yield();
@@ -47,6 +48,7 @@ void AudioAnalyzer::loop()
 			processBuffer((float)clock() / CLOCKS_PER_SEC - startTime);
 		}
 	}
+	running = false;
 }
 
 float AudioAnalyzer::hann(size_t n)
@@ -97,6 +99,11 @@ void AudioAnalyzer::processBuffer(float time)
 		analysisHead = 0;
 	else
 		analysisHead = analysisHead + FFT_CHUNK_SIZE;
+}
+
+bool AudioAnalyzer::isRunning()
+{
+	return this->running;
 }
 
 void AudioAnalyzer::stop()

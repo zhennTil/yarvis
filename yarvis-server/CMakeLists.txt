@@ -5,7 +5,7 @@ find_package (GLFW REQUIRED)
 find_package (SDL REQUIRED)
 find_package (SDL_net REQUIRED)
 
-include_directories (beatdetektor/cpp kiss_fft130 kiss_fft130/tools ${PORTAUDIO_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SDL_INCLUDE_DIR} ${SDL_NET_INCLUDE_DIRS})
+include_directories (${YARVIS_LIB_DIR}/beatdetektor/cpp ${YARVIS_LIB_DIR}/kiss_fft130 ${YARVIS_LIB_DIR}/kiss_fft130/tools ${PORTAUDIO_INCLUDE_DIRS} ${GLFW_INCLUDE_DIRS} ${SDL_INCLUDE_DIR} ${SDL_NET_INCLUDE_DIRS})
 
 add_definitions (${PORTAUDIO_DEFINITIONS})
 
